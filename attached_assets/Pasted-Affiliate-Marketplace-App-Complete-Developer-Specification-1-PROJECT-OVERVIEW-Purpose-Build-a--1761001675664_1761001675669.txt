@@ -1,0 +1,1171 @@
+Affiliate Marketplace App - Complete Developer Specification
+1. PROJECT OVERVIEW
+Purpose
+Build a mobile application (iOS & Android) that connects video content creators with companies offering affiliate programs. The platform allows companies to showcase their affiliate offers with example promotional videos, while creators can browse, apply, and promote products/services for commission.
+Core Value Proposition
+●For Creators: Centralized marketplace to discover affiliate opportunities across niches with clear commission structures, example videos, and flexible payment models (per-video or monthly retainer)
+●For Companies: Easy platform to recruit video creators with detailed analytics, manual vetting of partners, and flexible commission structures
+
+2. USER ROLES & PERMISSIONS
+2.1 Creator (Video Content Creators)
+Target Audience: YouTubers, TikTokers, Instagram Reels creators, short-form video creators, podcasters with video Exclude: Bloggers, text-only content creators
+Size Focus:
+●Primary: Small to medium creators (1K-500K followers)
+●Secondary: Larger creators (500K+)
+Permissions:
+●Browse all approved offers
+●Filter and search offers
+●Favorite/save offers
+●Apply to specific offers
+●Message companies (not other creators)
+●View their application status
+●Access approved affiliate links (UTM-tracked)
+●View their own performance analytics
+●Submit reviews for offers they've worked with
+2.2 Company (Offer Providers)
+Target Audience: Any industry (SaaS, physical products, apps, services, etc.)
+Permissions:
+●Create and submit offers for approval
+●Edit offers after approval
+●Upload up to 12 example videos per offer
+●Message creators who applied (not other companies)
+●View detailed analytics (views, clicks, applications, conversions)
+●Manage payment information
+●Choose commission structure (per-action OR monthly retainer)
+●Purchase priority/rush listing upgrades
+2.3 Super Admin (Platform Operators)
+Permissions:
+●Manually approve/reject company registrations
+●Manually approve/reject offers
+●Monitor all in-app messaging
+●Edit, add, or remove reviews
+●Access all analytics across platform
+●Manage payment disputes
+●Configure platform fees
+●Configure niche categories
+●Ban users for violations
+●View financial reports
+
+3. TECHNICAL ARCHITECTURE
+3.1 Platform Requirements
+●Mobile: Native iOS (Swift/SwiftUI) and Android (Kotlin/Jetpack Compose) OR Cross-platform (React Native/Flutter)
+●Backend: Node.js/Express, Python/Django, or Ruby on Rails
+●Database: PostgreSQL or MongoDB
+●Video Storage: AWS S3, Google Cloud Storage, or Cloudflare R2
+●Real-time Messaging: Socket.io or Firebase Realtime Database
+●Authentication: JWT tokens, OAuth 2.0
+●Payment Processing: Stripe Connect or similar for handling multi-party payments
+3.2 Analytics & Tracking Solution
+CRITICAL REQUIREMENT: Implement a centralized tracking system where companies do NOT need their own Google Analytics 4 or domains.
+Recommended Solution: Build custom tracking infrastructure
+●Generate unique UTM-tagged short links for each creator-offer combination
+●Format: app.domain.com/go/{unique-code}
+●Backend logs all clicks with metadata (timestamp, device, location, referrer)
+●Integrate with server-side Google Analytics 4 Measurement Protocol (platform has ONE GA4 property)
+●Alternative: Use Segment, Mixpanel, or Amplitude for easier implementation
+●Track: Link clicks, conversions, video views, application submissions
+Auto-generation Requirements:
+●When creator approved (7 minutes after application), system automatically generates:
+○Unique tracking link per creator-offer pair
+○UTM parameters: utm_source=app_name&utm_medium=creator_id&utm_campaign=offer_id
+○QR code for link (optional)
+●Dashboard shows real-time tracking data
+3.3 Payment Infrastructure
+Platform Revenue Model:
+●One-time listing fee (variable, set by admin)
+●3% payment processing fee (deducted from company)
+●4% platform fee (deducted from company)
+●Total platform take: 7% of creator earnings
+Payment Flow:
+1.Creator completes agreed action (video posted, sales made, etc.)
+2.Company confirms completion in platform
+3.Platform calculates: Creator payment = Gross - 7%
+4.Platform processes payment to creator via their chosen method
+5.Platform retains 7% (3% processing + 4% platform fee)
+Creator Payment Methods:
+●E-transfer (Canada)
+●Wire transfer/ACH (USA/Canada)
+●PayPal
+●Cryptocurrency (Bitcoin, Ethereum, USDC)
+Company Payment Collection:
+●Stripe Connect for card/ACH processing
+●Require payment method on file before offer goes live
+●Auto-charge when creator completes work
+
+4. DETAILED FEATURE SPECIFICATIONS
+4.1 CREATOR FEATURES
+A. Browse & Discovery
+Home Screen Sections:
+●Trending Offers: Most applied-to offers in last 7 days
+●Highest Commission: Sorted by $ amount or %
+●New Listings: Recently approved offers
+●Recommended For You: Based on creator's selected niches
+Filter Options:
+●Niche/Category (multi-select)
+●Commission Range (slider: $0-$10,000+)
+●Commission Type (dropdown: Per Sale, Per Lead, Per Click, Monthly Retainer, Hybrid)
+●Minimum Payout (slider)
+●Company Rating (1-5 stars)
+●Trending (toggle)
+●Priority Listings (badge indicator)
+Sort Options:
+●Commission: High to Low
+●Commission: Low to High
+●Most Recently Posted
+●Most Popular (by applications)
+●Best Rated Companies
+B. Offer Detail Page
+Must Display:
+●Company logo and name
+●Product/service description (max 500 words)
+●Niche tags
+●Commission structure:
+○If per-action: Amount per sale/lead/click
+○If retainer: Monthly amount + deliverables (e.g., "1 video/day for 30 days")
+○Payment schedule (Net 30, Net 15, immediate, etc.)
+●Requirements (follower count, content style, geographic restrictions)
+●12 example promotional videos (embedded player)
+○Video title
+○Creator name (if uploaded by creator)
+○Video platform icon (YouTube, TikTok, Instagram)
+○Video duration
+○View count on original platform (optional)
+●Company rating (average of all creator reviews)
+●Number of active creators promoting this offer
+●"Apply Now" button (prominent)
+●"Save to Favorites" icon
+C. Application Process
+Flow:
+1.Creator clicks "Apply Now"
+2.Modal appears with:
+○Text field: "Why are you interested?" (500 char limit)
+○Dropdown: Preferred commission model (Per-action OR Monthly retainer)
+○If retainer selected: Show available retainer packages
+○Checkbox: "I agree to terms and conditions"
+○Submit button
+3.After submission:
+○Success message: "Application submitted! You'll receive a response within 4 hours."
+○Status shows "Pending" in "My Applications" section
+4.AUTOMATED APPROVAL (7 minutes after submission):
+○Status changes to "Approved"
+○Push notification sent to creator
+○Email sent with subject: "You're approved for [Offer Name]!"
+○Unique tracking link generated and displayed
+○Link format: https://track.yourapp.com/go/[unique-8-char-code]
+○Instructions on how to use link provided
+My Applications Dashboard:
+●List view of all applications
+●Status indicators: Pending (yellow), Approved (green), Rejected (red), Active (blue), Completed (gray)
+●Quick actions: Message Company, Copy Link, View Analytics
+D. Creator Analytics Dashboard
+Per-Offer Metrics (only for approved offers):
+●Link clicks (total, unique)
+●Conversions (if tracked)
+●Earnings (total, pending, paid)
+●CTR (click-through rate)
+●Graph: Clicks over time (7d, 30d, 90d, all-time)
+●Top performing content (if creator tags posts)
+Overall Creator Stats:
+●Total earnings (all-time)
+●Active offers
+●Total clicks generated
+●Average commission per offer
+●Payment history
+E. In-App Messaging
+Functionality:
+●Creator can ONLY message companies they've applied to
+●Thread-based conversations
+●Real-time notifications
+●Attach images (for proof of work)
+●Company response time indicator
+●No creator-to-creator messaging
+●No company-to-company messaging
+F. Favorites/Saved Offers
+●Heart icon to save offers
+●Dedicated "Saved" tab
+●Remove from favorites option
+●Sort saved by: Date Added, Commission, Category
+G. Reviews & Ratings
+After Completing First Campaign:
+●Prompt to review company
+●5-star rating
+●Text review (optional, 1000 char limit)
+●Categories: Payment Speed, Communication, Offer Quality, Support
+●Reviews visible on company profile and offer pages
+
+4.2 COMPANY FEATURES
+A. Registration & Onboarding
+CRITICAL: Manual approval required - NO auto-approval
+Registration Form (Multi-step):
+1.Company Information:
+○Company legal name
+○Trade/DBA name (if different)
+○Industry/primary niche
+○Website URL (required)
+○Company size (dropdown: 1-10, 11-50, 51-200, 201-1000, 1000+)
+○Year founded
+○Company logo (square, min 512x512px)
+○Company description (max 1000 words)
+2.Contact Information:
+○Full name of primary contact
+○Job title
+○Business email (verified via email link)
+○Business phone number
+○Business address (full)
+3.Verification Documents:
+○Business registration certificate OR
+○EIN/Tax ID number
+○Website verification (Meta tag or DNS TXT record)
+○Social media profiles (optional but recommended)
+4.Initial Offer Preview (optional):
+○Can draft first offer during registration
+○Not published until company approved
+Approval Process:
+●Submission triggers alert to admin team
+●Admin reviews all documents within 24-48 hours
+●Admin can:
+○Approve (company gets "Approved" email, can create offers)
+○Request more info (company gets email with specific requests)
+○Reject (company gets email with reason, can re-apply after 30 days)
+●Status visible in company dashboard
+B. Finance/Payment Setup
+Separate Tab (can be completed later, but required before receiving first payment):
+●Payout Method Selection:
+○E-transfer: Email for e-transfer
+○Wire/ACH: Bank name, routing number, account number, account type
+○PayPal: PayPal email
+○Crypto: Wallet address + network selection
+●Tax information (W-9 for US, business tax info for others)
+●Billing contact (if different from primary)
+●Save multiple payout methods (set default)
+C. Create Offer
+Offer Creation Form:
+1.Basic Information:
+○Offer title (max 100 chars)
+○Product/service name
+○Short description (max 200 chars for previews)
+○Full description (max 3000 chars, rich text)
+○Primary niche (dropdown)
+○Additional niches (multi-select, max 3)
+○Product/service URL
+○Featured image (16:9, min 1920x1080px)
+2.Commission Structure:
+○Type Selection (radio buttons):
+■Per Sale (fixed $ or %)
+■Per Lead
+■Per Click
+■Monthly Retainer
+■Hybrid (combination of above)
+○If Per-Action:
+■Amount or percentage
+■Cookie duration (30, 60, 90 days, or custom)
+■Average order value (optional, helps creators estimate)
+■Minimum payout threshold
+○If Monthly Retainer:
+■Fixed monthly amount
+■Required deliverables:
+■Number of videos per month
+■Minimum video length
+■Posting schedule (e.g., "1 video every weekday")
+■Content approval process (Y/N)
+■Exclusivity required (Y/N)
+■Contract length (1 month, 3 months, 6 months, 12 months)
+■Can offer multiple tiers (e.g., Bronze: 10 videos/$500, Silver: 20 videos/$900, Gold: 30 videos/$1500)
+○Payment schedule (immediate, Net 15, Net 30, Net 60)
+3.Creator Requirements:
+○Minimum followers/subscribers (optional)
+○Allowed platforms (check boxes: YouTube, TikTok, Instagram, Facebook, Snapchat, X/Twitter, LinkedIn, Other)
+○Geographic restrictions (multi-select countries or "Worldwide")
+○Age restrictions (18+, 21+, No restriction)
+○Content style requirements (text field, 500 chars)
+○Brand safety requirements (text field, 500 chars)
+4.Example Videos (REQUIRED - must upload at least 6, max 12):
+○Upload from device OR paste URL (YouTube, TikTok, Instagram)
+○For each video:
+■Title (max 100 chars)
+■Creator credit (optional, text field)
+■Description/why it works (optional, 300 chars)
+■Original platform (dropdown)
+■Video file (if uploading): MP4, max 500MB per video
+■If URL: System attempts to embed or cache video
+○Drag-and-drop reordering
+○Set primary video (auto-plays in offer preview)
+5.Terms & Conditions:
+○Checkbox: "I have rights to all uploaded videos"
+○Checkbox: "I agree to platform terms"
+○Checkbox: "I will pay creators on time per agreement"
+○Custom terms (optional, max 2000 chars)
+6.Pricing:
+○Display one-time listing fee (set by admin, e.g., $299)
+○Display platform fees (7% of creator payments)
+○Priority/Rush Listing Option:
+■Checkbox: "Make this a priority listing" (+$199 or admin-set amount)
+■Benefits displayed: "Appear above standard listings in browse & search, highlighted badge, featured in priority section"
+○Payment method selection
+○Review and submit
+After Submission:
+●Offer status: "Under Review"
+●Admin notification sent
+●Company can view draft but offer not live
+●Admin reviews offer (usually 24 hours)
+●Admin can request edits or approve
+●Upon approval: Offer goes live, email sent to company
+D. Edit Offer
+Company Can Edit:
+●Description and images
+●Commission amounts (with 7-day notice to active creators)
+●Requirements (with notice to active creators)
+●Add/remove example videos
+●Enable/disable applications
+●Pause offer (stops new applications, existing creators continue)
+●Archive offer (closes all active partnerships)
+Company CANNOT Edit:
+●Niche categories (contact admin)
+●Offers with active retainer contracts (must wait until contracts expire)
+E. Company Analytics Dashboard
+DETAILED METRICS - CRITICAL FEATURE
+Overview Section:
+●Total active creators
+●Total applications (all-time)
+●Pending applications (need attention)
+●Conversion rate (applications → active creators)
+●Total link clicks generated (all creators)
+●Total conversions (if tracked)
+●Total creator payouts (pending, paid)
+●ROI calculator (revenue from affiliates vs. costs)
+Per-Offer Analytics:
+●Views of offer page
+●Unique visitors
+●Application rate (applications/views)
+●Active creators
+●Total clicks generated (by all creators)
+●Total conversions
+●Average performance per creator
+●Top performing creators (table):
+○Creator name/username
+○Clicks generated
+○Conversions
+○Earnings
+○Join date
+○Last activity
+Creator Management:
+●List of all creators per offer
+●Status: Pending, Approved, Active (posted content), Paused, Completed
+●Quick actions: Message, View Analytics, Approve Payout, Remove
+●Filter by: Status, Performance, Join Date
+Graphs & Visualizations:
+●Applications over time (line graph)
+●Clicks over time (line graph)
+●Conversions funnel (if tracked)
+●Creator acquisition by source
+●Geographic heatmap of creator locations
+Export Options:
+●CSV export of creator list
+●PDF analytics report
+●Integration with data tools (optional: Zapier webhook)
+F. Messaging
+●Message creators who applied
+●Thread view
+●Attachments (images, PDFs)
+●Canned responses/templates
+●Mark threads as resolved
+●No messaging with other companies
+G. Payment Management
+Payout Approval System:
+●Creators mark work as complete (upload proof)
+●Company reviews and approves
+●Upon approval, payment scheduled per payment terms
+●Company dashboard shows:
+○Pending approvals
+○Scheduled payouts
+○Completed payments
+○Disputed payments
+●Dispute resolution system (flag issues, admin mediates)
+
+4.3 SUPER ADMIN FEATURES
+A. Dashboard Overview
+●Total users (creators, companies)
+●New registrations (24h, 7d, 30d)
+●Active offers
+●Pending approvals (companies, offers)
+●Revenue metrics (listing fees, platform fees)
+●Platform health (uptime, errors)
+●Recent activity feed
+B. Company Management
+●List all companies (table view)
+●Filter by: Status (pending, approved, suspended), Industry, Join Date
+●Individual company pages showing:
+○Full registration details
+○Verification documents (viewable)
+○All offers created
+○Payment history
+○Creator relationships
+○Support tickets
+●Actions:
+○Approve/Reject registration
+○Request additional info (email template)
+○Suspend account
+○Ban permanently
+○Edit company details
+○Refund listing fees
+○Adjust platform fees (per company override)
+C. Offer Management
+●List all offers (table view)
+●Filter by: Status (pending, live, paused, archived), Niche, Commission Type
+●Individual offer pages showing:
+○All offer details
+○Example videos (viewable)
+○Application stats
+○Active creators
+○Performance metrics
+●Actions:
+○Approve/Reject offer
+○Request edits (with specific notes)
+○Feature on homepage
+○Remove from platform
+○Adjust listing fees
+D. Creator Management
+●List all creators (table view)
+●Filter by: Active Status, Total Earnings, Join Date
+●Individual creator pages showing:
+○Profile details
+○Social media links
+○Application history
+○Active offers
+○Earnings history
+○Reviews given
+●Actions:
+○Suspend account
+○Ban permanently
+○Adjust payout
+○Remove reviews
+E. Review Management System
+CRITICAL FEATURE
+Review Dashboard:
+●All reviews (table view)
+●Columns: Creator, Company, Rating, Date, Status (published/hidden)
+●Filter by: Rating, Company, Date, Status
+●Search by keyword
+Individual Review Actions:
+●View full review with context
+●Edit Review:
+○Change rating (1-5 stars)
+○Edit review text
+○Flag as "Admin Edited" (visible to users or not - admin choice)
+○Add internal notes (not visible to users)
+●Add New Review:
+○Select creator (from approved list)
+○Select company
+○Write review on creator's behalf
+○Flag as "Verified" or normal review
+●Delete Review:
+○Remove from public view
+○Archive (keeps record but hidden)
+○Reason required (internal note)
+●Respond to Review:
+○Admin can add official response
+○Appears below review as "Platform Response"
+Review Moderation Settings:
+●Auto-approve reviews (toggle)
+●Flag reviews for manual review if:
+○Contains profanity
+○Rating is 1-2 stars
+○Mentions legal/dispute keywords
+●Email notifications for new reviews
+F. Messaging Oversight
+●View all conversations (searchable)
+●Flag inappropriate messages
+●Step into conversation as admin
+●Auto-flag messages with banned keywords
+●Export conversation history
+G. Analytics & Reports
+●Financial reports:
+○Revenue by source (listing fees, platform fees)
+○Payouts by period
+○Outstanding balances
+○Payment processing costs
+●User reports:
+○Creator acquisition and churn
+○Company acquisition and churn
+○Most active creators
+○Top performing offers
+●Platform health:
+○API response times
+○Error rates
+○Storage usage
+○Video hosting costs
+H. Configuration Settings
+●Niche Management:
+○Add new niche categories
+○Reorder niches
+○Set primary niches (e.g., "Apps" as #1)
+○Merge niches
+●Fee Configuration:
+○Set default listing fee
+○Set priority listing fee
+○Adjust platform fee percentage (currently 4%)
+○Adjust payment processing fee (currently 3%)
+○Special pricing for specific companies
+●Automation Settings:
+○Auto-approval timer (currently 7 minutes)
+○Response SLA (currently "within 4 hours")
+○Payment schedules
+○Reminder email timing
+●Content Moderation:
+○Banned keywords list
+○Restricted industries
+○Content guidelines (editable)
+○Upload size limits
+I. Payment Processing
+●Process scheduled payouts (batch)
+●Handle failed payments
+●Issue refunds
+●Resolve payment disputes
+●View payment processor fees
+●Reconcile accounts
+
+5. DATABASE SCHEMA (Recommended Structure)
+Users Table
+●id (UUID, Primary Key)
+●email (unique)
+●password_hash
+●user_type (enum: creator, company, admin)
+●status (enum: pending, active, suspended, banned)
+●created_at
+●updated_at
+●last_login
+Creators Table
+●id (UUID, Primary Key, FK to Users)
+●display_name
+●avatar_url
+●bio
+●social_links (JSON: {platform: url})
+●follower_counts (JSON: {platform: count})
+●preferred_niches (Array)
+●total_earnings
+●payment_info (JSON, encrypted)
+Companies Table
+●id (UUID, Primary Key, FK to Users)
+●legal_name
+●trade_name
+●logo_url
+●website
+●description
+●industry
+●company_size
+●verification_status (enum: pending, verified, rejected)
+●verification_documents (Array of file URLs)
+●approval_date
+●payment_info (JSON, encrypted)
+Offers Table
+●id (UUID, Primary Key)
+●company_id (FK to Companies)
+●title
+●slug (for URLs)
+●short_description
+●full_description
+●featured_image_url
+●niches (Array)
+●commission_type (enum: per_sale, per_lead, per_click, retainer, hybrid)
+●commission_details (JSON: varies by type)
+●requirements (JSON: follower_min, platforms, geo, etc.)
+●terms
+●status (enum: draft, under_review, live, paused, archived)
+●is_priority (boolean)
+●view_count
+●application_count
+●active_creator_count
+●created_at
+●updated_at
+●approved_at
+ExampleVideos Table
+●id (UUID, Primary Key)
+●offer_id (FK to Offers)
+●title
+●video_url (S3 or external)
+●creator_credit
+●description
+●platform
+●display_order
+●uploaded_by_user_id (FK to Users)
+●created_at
+Applications Table
+●id (UUID, Primary Key)
+●creator_id (FK to Creators)
+●offer_id (FK to Offers)
+●message
+●preferred_commission_type
+●status (enum: pending, approved, rejected, active, completed)
+●applied_at
+●approved_at
+●unique_tracking_code (8-char, indexed)
+●tracking_link
+TrackingLinks Table
+●id (UUID, Primary Key)
+●application_id (FK to Applications)
+●short_code (unique, indexed)
+●full_url
+●click_count
+●unique_click_count
+●conversion_count
+●created_at
+ClickEvents Table
+●id (UUID, Primary Key)
+●tracking_link_id (FK to TrackingLinks)
+●ip_address (hashed for privacy)
+●user_agent
+●referrer
+●country
+●device_type
+●clicked_at
+●converted (boolean)
+Messages Table
+●id (UUID, Primary Key)
+●sender_id (FK to Users)
+●receiver_id (FK to Users)
+●application_id (FK to Applications, nullable)
+●message_text
+●attachments (Array of URLs)
+●read (boolean)
+●sent_at
+Reviews Table
+●id (UUID, Primary Key)
+●creator_id (FK to Creators)
+●company_id (FK to Companies)
+●application_id (FK to Applications)
+●rating (1-5)
+●review_text
+●category_ratings (JSON: payment_speed, communication, etc.)
+●status (enum: published, hidden, flagged)
+●edited_by_admin (boolean)
+●admin_notes (text, private)
+●created_at
+●updated_at
+Transactions Table
+●id (UUID, Primary Key)
+●application_id (FK to Applications)
+●creator_id (FK to Creators)
+●company_id (FK to Companies)
+●amount_gross
+●platform_fee
+●processing_fee
+●amount_net (what creator receives)
+●status (enum: pending, scheduled, completed, failed, disputed)
+●payment_method
+●scheduled_date
+●completed_date
+●receipt_url
+Favorites Table
+●id (UUID, Primary Key)
+●creator_id (FK to Creators)
+●offer_id (FK to Offers)
+●saved_at
+
+6. API ENDPOINTS (RESTful Structure)
+Authentication
+●POST /api/auth/register - User registration
+●POST /api/auth/login - User login
+●POST /api/auth/logout - User logout
+●POST /api/auth/refresh - Refresh JWT token
+●POST /api/auth/forgot-password - Password reset request
+●POST /api/auth/reset-password - Complete password reset
+Creators
+●GET /api/creators/me - Get current creator profile
+●PUT /api/creators/me - Update creator profile
+●GET /api/creators/me/applications - List my applications
+●GET /api/creators/me/favorites - List saved offers
+●POST /api/creators/me/favorites - Save offer to favorites
+●DELETE /api/creators/me/favorites/:offerId - Remove from favorites
+●GET /api/creators/me/analytics - Get my performance analytics
+●GET /api/creators/me/earnings - Get earnings history
+Companies
+●GET /api/companies/me - Get company profile
+●PUT /api/companies/me - Update company profile
+●PUT /api/companies/me/payment-info - Update payment information
+●GET /api/companies/me/offers - List my offers
+●POST /api/companies/me/offers - Create new offer
+●PUT /api/companies/me/offers/:id - Edit offer
+●DELETE /api/companies/me/offers/:id - Archive offer
+●GET /api/companies/me/analytics - Get company analytics
+●GET /api/companies/me/creators - List creators by offer
+Offers
+●GET /api/offers - Browse offers (with filters, pagination)
+●GET /api/offers/trending - Get trending offers
+●GET /api/offers/:id - Get specific offer details
+●POST /api/offers/:id/apply - Apply to offer
+●GET /api/offers/:id/videos - Get example videos for offer
+●GET /api/offers/search - Search offers
+Applications
+●POST /api/applications - Submit application
+●GET /api/applications/:id - Get application details
+●PUT /api/applications/:id/status - Update application status (company only)
+●GET /api/applications/:id/tracking-link - Get tracking link (after approval)
+Tracking
+●GET /api/track/:shortCode - Redirect and log click
+●POST /api/tracking/conversion - Record conversion (webhook or manual)
+●GET /api/tracking/analytics/:applicationId - Get analytics for specific application
+Messages
+●GET /api/messages/threads - List conversation threads
+●GET /api/messages/threads/:threadId - Get messages in thread
+●POST /api/messages/threads/:threadId - Send message
+●PUT /api/messages/:messageId/read - Mark as read
+Reviews
+●POST /api/reviews - Submit review
+●GET /api/reviews/company/:companyId - Get reviews for company
+●GET /api/reviews/me - Get my reviews
+Admin (Super Admin Only)
+●GET /api/admin/companies/pending - List pending company approvals
+●PUT /api/admin/companies/:id/approve - Approve company
+●PUT /api/admin/companies/:id/reject - Reject company
+●GET /api/admin/offers/pending - List pending offer approvals
+●PUT /api/admin/offers/:id/approve - Approve offer
+●PUT /api/admin/offers/:id/reject - Reject offer
+●GET /api/admin/reviews - List all reviews
+●PUT /api/admin/reviews/:id - Edit review
+●POST /api/admin/reviews - Create review
+●DELETE /api/admin/reviews/:id - Delete review
+●GET /api/admin/analytics - Platform-wide analytics
+●GET /api/admin/transactions - All transactions
+●POST /api/admin/payouts/process - Process scheduled payouts
+Niches
+●GET /api/niches - List all available niches/categories
+Payments
+●POST /api/payments/setup-intent - Create Stripe setup intent
+●POST /api/payments/payout - Request payout
+●GET /api/payments/history - Payment history
+
+7. UI/UX DESIGN REQUIREMENTS
+Design Style
+●Modern, clean, mobile-first design
+●Priority on video content (large thumbnails, auto-play)
+●Clear CTAs (bright buttons for primary actions)
+●Trust indicators (verified badges, ratings prominent)
+●Fast loading (optimize images, lazy load videos)
+Color Scheme Suggestions
+●Primary: Vibrant color for CTAs (e.g., teal, purple, or blue)
+●Secondary: Neutral grays and whites
+●Success: Green (for approvals, earnings)
+●Warning: Yellow/orange (for pending)
+●Error: Red (for rejections, issues)
+●Priority/Featured: Gold or orange badge
+Key UI Patterns
+Creator App Screens
+1.Home/Browse
+○Top navigation: Search, Filter icon, Profile
+○Tab bar: Home, Browse, Applications, Favorites, Profile
+○Card-based layout for offers
+○Quick filter chips (Apps, Beauty, Tech, etc.)
+2.Offer Detail
+○Hero image/video
+○Company info header
+○Tabbed content: Overview, Videos, Requirements, Reviews
+○Sticky footer with "Apply" button
+3.Application Modal
+○Simple form with minimal fields
+○Progress indicator (if multi-step)
+○Clear success confirmation
+4.Analytics
+○Dashboard cards with key metrics
+○Interactive graphs
+○Date range selector
+○Export button
+Company Dashboard Screens
+1.Overview
+○Metric cards (applications, active creators, clicks, revenue)
+○Quick actions: Create Offer, View Messages, Download Report
+○Recent activity feed
+2.Create/Edit Offer
+○Multi-step form with progress indicator
+○Inline validation
+○Preview mode before submit
+○Save as draft option
+3.Creator Management
+○Table view with filters
+○Quick actions per row
+○Bulk actions (select multiple)
+○Export to CSV
+Admin Panel
+●Sidebar navigation
+●Dashboard widgets (customizable)
+●Data tables with advanced filtering
+●Approval queues with priority sorting
+●Bulk action tools
+Notifications
+●Push notifications (mobile)
+●In-app notification center
+●Email notifications (configurable per user)
+●Notification types:
+○Application status change
+○New message
+○Payment received
+○Offer approved/rejected
+○New application (for companies)
+○Review received
+○System announcements
+
+8. SECURITY & COMPLIANCE
+Data Protection
+●Encrypt sensitive data at rest (payment info, personal details)
+●Use HTTPS for all communications
+●Hash passwords with bcrypt (min 10 rounds)
+●Implement rate limiting on API endpoints
+●Sanitize all user inputs (prevent XSS, SQL injection)
+●Secure file uploads (validate types, scan for malware)
+Privacy
+●GDPR compliance (EU users)
+●CCPA compliance (California users)
+●Data export functionality (users can download their data)
+●Account deletion (permanent removal of PII)
+●Cookie consent banner
+●Privacy policy and terms of service (easily accessible)
+Payment Security
+●PCI DSS compliance (use Stripe/payment processor for card handling)
+●Never store full credit card numbers
+●Tokenize payment methods
+●Two-factor authentication for high-value transactions
+●Fraud detection (flag suspicious patterns)
+User Verification
+●Email verification required for all users
+●Phone verification optional (for creators)
+●Document verification for companies (manual review)
+●IP logging (for fraud prevention)
+●Device fingerprinting (detect multi-accounts)
+
+9. AUTOMATED WORKFLOWS
+Creator Application Auto-Approval
+Trigger: Creator submits application Workflow:
+1.Store application with status "Pending"
+2.Send immediate confirmation email/push notification
+3.Wait 7 minutes
+4.Change status to "Approved"
+5.Generate unique tracking link:
+○Create short code (8 characters, alphanumeric)
+○Format: https://track.yourapp.com/go/{shortCode}
+○Store in database with application_id reference
+6.Send approval notification with tracking link
+7.Log event in analytics
+Example Videos Per Offer Enforcement
+Validation Rule: Companies must upload between 6-12 example videos before offer can be submitted for approval Implementation:
+●Upload interface shows count: "6 of 12 videos uploaded"
+●Submit button disabled until minimum (6) reached
+●Warning message if trying to submit with <6 videos
+●Confirmation prompt if exactly 6 videos (suggest adding more)
+Payment Processing Automation
+Trigger: Company approves creator's work completion Workflow:
+1.Calculate amounts:
+○Gross amount (agreed commission)
+○Platform fee (4% of gross)
+○Processing fee (3% of gross)
+○Net amount (gross - 7%)
+2.Schedule payment based on company's payment terms
+3.On scheduled date:
+○Charge company via stored payment method
+○If charge successful: Initiate payout to creator
+○If charge fails: Retry 3 times over 3 days, then notify admin
+4.Send confirmation emails to both parties
+5.Update transaction records
+Priority Listing Expiration
+Rule: Priority listings last 30 days unless renewed Workflow:
+●7 days before expiration: Email company with renewal option
+●On expiration: Remove priority badge, return to normal listing
+●Log event in company account
+
+10. ANALYTICS IMPLEMENTATION
+Tracking Infrastructure
+Central Tracking System:
+●Single GA4 property owned by platform
+●Use Measurement Protocol API for server-side tracking
+●Track events:
+○offer_view - Offer page viewed
+○offer_apply - Application submitted
+○link_click - Affiliate link clicked
+○conversion - Sale/lead/goal completed (if trackable)
+○video_view - Example video played
+○favorite_add - Offer saved
+○message_sent - Message sent between users
+○review_submit - Review submitted
+Custom Tracking Links:
+●Format: https://track.yourapp.com/go/{shortCode}
+●On click:
+○Log click event (timestamp, IP, user agent, referrer, geo)
+○Check if unique click (based on IP + user agent + 24h window)
+○Update click counts in database
+○Send event to GA4 via Measurement Protocol
+○Redirect to final destination URL
+●Conversion tracking:
+○Option 1: Postback URL (company pings when conversion happens)
+○Option 2: Pixel tracking (embed tracking pixel on thank you page)
+○Option 3: Manual confirmation (company marks conversions in dashboard)
+Alternative to GA4
+Recommended: Segment.io or Mixpanel
+●Easier implementation than GA4 Measurement Protocol
+●Better UI for non-technical users
+●Built-in dashboards
+●Real-time data
+●Easier to debug
+●Can still forward events to GA4 if needed
+Implementation:
+1.Integrate Segment/Mixpanel SDK in backend
+2.Track same events as listed above
+3.Create standard dashboards for creators and companies
+4.Use Segment's personas for user attribution
+5.Set up automated reports
+
+11. TESTING REQUIREMENTS
+Unit Tests
+●Test all API endpoints
+●Test database operations
+●Test payment calculations
+●Test link generation logic
+●Test access control (permissions)
+●Minimum 80% code coverage
+Integration Tests
+●Test full user journeys:
+○Creator registration → browse → apply → receive link
+○Company registration → create offer → manage creators → process payment
+○Admin approval workflows
+●Test payment flows end-to-end
+●Test messaging system
+●Test analytics tracking
+Security Tests
+●Penetration testing
+●SQL injection attempts
+●XSS attack simulations
+●CSRF protection validation
+●Rate limiting effectiveness
+●Authentication bypass attempts
+Performance Tests
+●Load testing (1000+ concurrent users)
+●Video upload performance
+●API response times (<200ms for most endpoints)
+●Database query optimization
+●CDN effectiveness for video delivery
+User Acceptance Testing
+●Beta test with 50 creators and 10 companies
+●Collect feedback on:
+○Ease of use
+○Feature completeness
+○Bug reports
+○Feature requests
+●Iterate based on feedback
+
+12. DEPLOYMENT & INFRASTRUCTURE
+Hosting Recommendations
+●Backend: AWS EC2, Google Cloud Run, or Heroku
+●Database: AWS RDS (PostgreSQL), Google Cloud SQL, or MongoDB Atlas
+●Video Storage: AWS S3, Google Cloud Storage, or Cloudflare R2
+●CDN: CloudFront, Cloudflare, or Fastly (for video delivery)
+●Message Queue: AWS SQS or Redis (for async tasks)
+●Monitoring: Datadog, New Relic, or Sentry
+Environment Setup
+●Development
+●Staging
+●Production
+Continuous Integration/Deployment
+●GitHub Actions or GitLab CI/CD
+●Automated testing on every commit
+●Automated deployment to staging on merge to develop branch
+●Manual approval for production deployments
+●Rollback capability
+Scaling Considerations
+●Horizontal scaling for API servers (load balancer)
+●Database read replicas for analytics queries
+●Video transcoding queue for uploaded videos
+●Caching layer (Redis) for frequently accessed data
+●CDN for static assets and videos
+
+13. LAUNCH STRATEGY
+Phase 1: MVP (Minimum Viable Product)
+Timeline: 3-4 months
+Core Features:
+●Creator registration and profile
+●Company registration (manual approval)
+●Create and browse offers (Apps niche only)
+●Basic filtering (category, commission)
+●Application system with auto-approval
+●Tracking link generation
+●Basic analytics (clicks, applications)
+●In-app messaging
+●Payment processing (manual initially)
+Testing: Internal testing with 10 creators and 3 companies
+Phase 2: Beta Launch
+Timeline: Month 5-6
+Additional Features:
+●Expand to 10 niches
+●Enhanced analytics
+●Review system
+●Favorites
+●Priority listings
+●Mobile app (iOS and Android)
+●Email notifications
+●Admin panel enhancements
+Testing: Public beta with 100 creators and 20 companies Goal: Validate product-market fit, collect feedback
+Phase 3: Public Launch
+Timeline: Month 7+
+Additional Features:
+●Full niche library (50+ categories)
+●Advanced filtering
+●Automated payment processing
+●Retainer commission model
+●Admin review management
+●Advanced admin analytics
+●API for third-party integrations (optional)
+Marketing:
+●Influencer partnerships
+●Content marketing
+●Paid ads (Meta, Google)
+●PR outreach
+
+14. CRITICAL IMPLEMENTATION NOTES
+Must-Have Features (Cannot Launch Without)
+1.✅ Manual company approval (prevent fraud)
+2.✅ 6-12 example videos per offer (quality control)
+3.✅ Auto-approval for creators in 7 minutes with tracking link
+4.✅ Centralized tracking (no GA4 per company)
+5.✅ Commission structure includes retainer option
+6.✅ In-app messaging (creator ↔ company only)
+7.✅ Super admin review management
+8.✅ Detailed analytics for companies
+9.✅ Priority listing option
+10.✅ 7% platform fee (3% processing + 4% platform)
+Performance Benchmarks
+●Page load time: <2 seconds
+●API response: <200ms (95th percentile)
+●Video streaming: Start playback in <1 second
+●Search results: <500ms
+●Tracking redirect: <100ms
+Scalability Targets
+●Support 10,000 creators
+●Support 1,000 companies
+●Handle 1M tracking link clicks/month
+●Store 50,000 videos
+●Process 10,000 transactions/month
+
+15. FUTURE ENHANCEMENTS (Post-Launch)
+Potential Features (Not in MVP)
+●AI-powered offer recommendations for creators
+●Automated content performance analysis
+●Integration with social media APIs (auto-post tracking)
+●White-label solution for agencies
+●Affiliate network partnerships
+●Creator collaboration features (team campaigns)
+●Advanced retargeting for creators
+●Gamification (badges, leaderboards)
+●Referral program (creators invite creators)
+●Mobile app for companies (not just web dashboard)
+●Video creation tools in-app
+●Contract templates and e-signatures
+●Tax document generation (1099s)
+●Multi-language support
+
+16. SUPPORT & DOCUMENTATION
+User Documentation
+●For Creators:
+○Getting started guide
+○How to apply to offers
+○How to use tracking links
+○Understanding analytics
+○Payment FAQs
+●For Companies:
+○Registration guide
+○Creating effective offers
+○Managing creators
+○Understanding analytics
+○Payment processing guide
+●Video Tutorials:
+○Platform overview (3 min)
+○Creator walkthrough (5 min)
+○Company walkthrough (7 min)
+○Admin panel guide (10 min)
+In-App Support
+●Help center (searchable articles)
+●Live chat (business hours)
+●Email support (support@yourapp.com)
+●Contact form
+●FAQ section
+Developer Documentation
+●API documentation (if public API later)
+●Webhook documentation
+●Integration guides
+●Postman collection
+
+17. LEGAL & COMPLIANCE
+Required Legal Documents
+●Terms of Service (separate for creators and companies)
+●Privacy Policy
+●Cookie Policy
+●Affiliate Agreement (template for creator-company relationships)
+●Platform Fee Schedule (transparent pricing)
+●Dispute Resolution Process
+●DMCA Policy (for video content)
+●Refund Policy
+Platform Liabilities
+●Disclaimer: Platform facilitates connections but is not party to agreements
+●Creator-Company relationships are independent contractor relationships
+●Platform handles payments but does not guarantee creator performance
+●Platform can remove content/users at discretion
+●Force majeure clause
+
+18. SUCCESS METRICS (KPIs)
+Platform Health
+●Daily Active Users (DAU)
+●Monthly Active Users (MAU)
+●Creator retention rate (30, 60, 90 day)
+●Company retention rate
+●Average offers per company
+●Average applications per creator
+Engagement
+●Offer view-to-application rate
+●Application-to-approval rate
+●Active partnerships (creator actively promoting)
+●Messages sent per day
+●Reviews submitted per month
+Financial
+●Monthly Recurring Revenue (MRR)
+●Average transaction value
+●Payment success rate
+●Churn rate
+●Customer acquisition cost (CAC)
+●Lifetime value (LTV)
+●Gross merchandise value (GMV) - total creator earnings
+Growth
+●New creator signups per week
+●New company signups per week
+●Viral coefficient (referrals)
+●Organic vs paid acquisition
+●Geographic expansion
+
+19. FINAL CHECKLIST BEFORE DEVELOPMENT
+Requirements Validation
+●All user stories documented
+●Database schema reviewed
+●API endpoints defined
+●UI/UX mockups approved
+●Payment processor selected
+●Hosting provider selected
+●Analytics solution decided
+●Legal documents prepared
+●Testing strategy defined
+●Launch timeline agreed
+Team & Resources
+●Backend developer(s) assigned
+●Frontend/Mobile developer(s) assigned
+●UI/UX designer assigned
+●QA tester assigned
+●DevOps engineer (or outsourced)
+●Project manager assigned
+●Budget approved
+●Timeline approved
+Third-Party Services
+●Stripe/payment processor account created
+●Email service provider (SendGrid, Mailgun) configured
+●SMS service (Twilio) if needed
+●Cloud storage (AWS S3) configured
+●CDN configured
+●Analytics platform (GA4/Segment) configured
+●Error tracking (Sentry) configured
+●Monitoring (Datadog) configured
+
+20. SUMMARY & NEXT STEPS
+This specification covers a comprehensive affiliate marketplace platform with the following core differentiators:
+✅ Manual quality control (company approvals prevent fraud) ✅ Rich media (12 example videos per offer for inspiration) ✅ Flexible compensation (per-action AND monthly retainer options) ✅ Automated yet human-touch (7-minute auto-approval, "4-hour response" promise) ✅ Centralized tracking (no complex setup for companies) ✅ Transparent economics (7% platform fee, clearly communicated) ✅ Creator-first (easy discovery, clear analytics, multiple payment options) ✅ Admin control (review editing, content moderation, fraud prevention)
