@@ -3,8 +3,9 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, MousePointerClick, TrendingUp, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { DollarSign, MousePointerClick, TrendingUp, CheckCircle2, Clock, ExternalLink, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -14,14 +15,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Application {
+  id: number;
+  status: string;
+  appliedAt: string;
+  trackingLink?: string;
+  offer: {
+    id: number;
+    title: string;
+  };
+  offerId?: number;
+}
+
+interface Analytics {
+  totalEarnings: number;
+  totalClicks: number;
+  totalConversions: number;
+  conversionRate: number;
+}
+
 export default function CreatorDashboard() {
-  const { data: applications, isLoading: applicationsLoading } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: applications, isLoading: applicationsLoading } = useQuery<Application[]>({
     queryKey: ["/api/creators/me/applications"],
   });
 
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<Analytics>({
     queryKey: ["/api/creators/me/analytics"],
   });
+
+  const applicationsArray = applications || [];
+  const activeCount = applicationsArray.filter((a) => a.status === "active" || a.status === "approved").length;
+  const pendingCount = applicationsArray.filter((a) => a.status === "pending").length;
 
   const stats = [
     {
@@ -33,9 +59,9 @@ export default function CreatorDashboard() {
     },
     {
       title: "Active Offers",
-      value: applications?.filter((a: any) => a.status === "active").length || 0,
+      value: activeCount,
       icon: TrendingUp,
-      change: `${applications?.filter((a: any) => a.status === "pending").length || 0} pending`,
+      change: `${pendingCount} pending`,
       color: "text-primary",
     },
     {
@@ -55,10 +81,10 @@ export default function CreatorDashboard() {
   ];
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; className: string }> = {
+    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
       pending: { variant: "secondary", className: "bg-chart-3/20 text-chart-3" },
       approved: { variant: "secondary", className: "bg-chart-2/20 text-chart-2" },
-      rejected: { variant: "secondary", className: "bg-destructive/20 text-destructive" },
+      rejected: { variant: "destructive", className: "bg-destructive/20 text-destructive" },
       active: { variant: "secondary", className: "bg-primary/20 text-primary" },
       completed: { variant: "secondary", className: "bg-muted text-muted-foreground" },
     };
@@ -72,17 +98,37 @@ export default function CreatorDashboard() {
     );
   };
 
+  const handleCopyLink = (trackingLink: string | undefined) => {
+    if (trackingLink) {
+      navigator.clipboard.writeText(trackingLink).then(() => {
+        toast({
+          title: "Link copied!",
+          description: "Your tracking link has been copied to clipboard.",
+        });
+      }).catch(() => {
+        toast({
+          title: "Failed to copy",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Creator Dashboard</h1>
             <p className="text-muted-foreground">Track your performance and manage your applications</p>
           </div>
           <Link href="/browse">
-            <Button data-testid="button-browse-offers">Browse Offers</Button>
+            <Button data-testid="button-browse-offers">
+              <Search className="w-4 h-4 mr-2" />
+              Browse Offers
+            </Button>
           </Link>
         </div>
 
@@ -101,7 +147,7 @@ export default function CreatorDashboard() {
             stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <Card key={index} className="hover-elevate">
+                <Card key={index}>
                   <CardHeader className="pb-3">
                     <CardDescription className="flex items-center gap-2">
                       <Icon className={`w-4 h-4 ${stat.color}`} />
@@ -138,67 +184,71 @@ export default function CreatorDashboard() {
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : applications && applications.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Offer</TableHead>
-                    <TableHead>Applied</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Commission</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {applications.slice(0, 5).map((app: any) => (
-                    <TableRow key={app.id} data-testid={`row-application-${app.id}`}>
-                      <TableCell className="font-medium">
-                        <Link href={`/offers/${app.offer.id}`}>
-                          <span className="hover:underline cursor-pointer">{app.offer.title}</span>
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(app.appliedAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
-                      <TableCell className="font-medium">
-                        {app.status === "approved" || app.status === "active" ? (
-                          <span className="text-chart-2">Active</span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {app.status === "approved" || app.status === "active" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (app.trackingLink) {
-                                navigator.clipboard.writeText(app.trackingLink);
-                              }
-                            }}
-                            data-testid={`button-copy-link-${app.id}`}
-                          >
-                            <ExternalLink className="w-4 h-4 mr-1" />
-                            Copy Link
-                          </Button>
-                        ) : (
-                          <Button variant="ghost" size="sm" disabled>
-                            <Clock className="w-4 h-4 mr-1" />
-                            Pending
-                          </Button>
-                        )}
-                      </TableCell>
+            ) : applicationsArray.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Offer</TableHead>
+                      <TableHead>Applied</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Commission</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {applicationsArray.slice(0, 5).map((app) => (
+                      <TableRow key={app.id} data-testid={`row-application-${app.id}`}>
+                        <TableCell className="font-medium">
+                          <Link href={`/offers/${app.offer?.id || app.offerId}`}>
+                            <span className="hover:underline cursor-pointer">
+                              {app.offer?.title || "Untitled Offer"}
+                            </span>
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell className="font-medium">
+                          {app.status === "approved" || app.status === "active" ? (
+                            <span className="text-chart-2">Active</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {app.status === "approved" || app.status === "active" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCopyLink(app.trackingLink)}
+                              data-testid={`button-copy-link-${app.id}`}
+                            >
+                              <ExternalLink className="w-4 h-4 mr-1" />
+                              Copy Link
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" disabled>
+                              <Clock className="w-4 h-4 mr-1" />
+                              Pending
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center py-12">
+                <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground mb-4">You haven't applied to any offers yet.</p>
                 <Link href="/browse">
-                  <Button>Browse Offers</Button>
+                  <Button>
+                    <Search className="w-4 h-4 mr-2" />
+                    Browse Offers
+                  </Button>
                 </Link>
               </div>
             )}

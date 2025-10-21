@@ -14,21 +14,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Offer {
+  id: number;
+  title: string;
+  status: string;
+  activeCreatorCount: number;
+  applicationCount: number;
+  viewCount: number;
+}
+
+interface Analytics {
+  totalCreators: number;
+  activeCreators: number;
+  totalClicks: number;
+  pendingApplications: number;
+}
+
 export default function CompanyDashboard() {
-  const { data: offers, isLoading: offersLoading } = useQuery({
+  const { data: offers, isLoading: offersLoading } = useQuery<Offer[]>({
     queryKey: ["/api/companies/me/offers"],
   });
 
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<Analytics>({
     queryKey: ["/api/companies/me/analytics"],
   });
+
+  const offersArray = offers || [];
+  const liveOffers = offersArray.filter((o) => o.status === "live").length;
+  const reviewOffers = offersArray.filter((o) => o.status === "under_review").length;
 
   const stats = [
     {
       title: "Active Offers",
-      value: offers?.filter((o: any) => o.status === "live").length || 0,
+      value: liveOffers,
       icon: FileText,
-      change: `${offers?.filter((o: any) => o.status === "under_review").length || 0} pending review`,
+      change: `${reviewOffers} pending review`,
       color: "text-primary",
     },
     {
@@ -55,7 +75,7 @@ export default function CompanyDashboard() {
   ];
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; className: string }> = {
+    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
       draft: { variant: "secondary", className: "bg-muted text-muted-foreground" },
       under_review: { variant: "secondary", className: "bg-chart-3/20 text-chart-3" },
       live: { variant: "secondary", className: "bg-chart-2/20 text-chart-2" },
@@ -64,10 +84,11 @@ export default function CompanyDashboard() {
     };
 
     const config = variants[status] || variants.draft;
+    const displayStatus = status.replace(/_/g, " ");
 
     return (
       <Badge variant={config.variant} className={config.className}>
-        {status.replace("_", " ")}
+        {displayStatus}
       </Badge>
     );
   };
@@ -76,7 +97,7 @@ export default function CompanyDashboard() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Company Dashboard</h1>
             <p className="text-muted-foreground">Manage your offers and track creator performance</p>
@@ -104,7 +125,7 @@ export default function CompanyDashboard() {
             stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <Card key={index} className="hover-elevate">
+                <Card key={index}>
                   <CardHeader className="pb-3">
                     <CardDescription className="flex items-center gap-2">
                       <Icon className={`w-4 h-4 ${stat.color}`} />
@@ -138,46 +159,50 @@ export default function CompanyDashboard() {
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : offers && offers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Offer Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Active Creators</TableHead>
-                    <TableHead>Applications</TableHead>
-                    <TableHead>Views</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {offers.map((offer: any) => (
-                    <TableRow key={offer.id} data-testid={`row-offer-${offer.id}`}>
-                      <TableCell className="font-medium">
-                        <Link href={`/offers/${offer.id}`}>
-                          <span className="hover:underline cursor-pointer">{offer.title}</span>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(offer.status)}</TableCell>
-                      <TableCell>{offer.activeCreatorCount}</TableCell>
-                      <TableCell>{offer.applicationCount}</TableCell>
-                      <TableCell className="text-muted-foreground">{offer.viewCount}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.location.href = `/company/offers/${offer.id}/edit`}
-                          data-testid={`button-edit-${offer.id}`}
-                        >
-                          Edit
-                        </Button>
-                      </TableCell>
+            ) : offersArray.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Offer Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-center">Active Creators</TableHead>
+                      <TableHead className="text-center">Applications</TableHead>
+                      <TableHead className="text-center">Views</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {offersArray.map((offer) => (
+                      <TableRow key={offer.id} data-testid={`row-offer-${offer.id}`}>
+                        <TableCell className="font-medium">
+                          <Link href={`/offers/${offer.id}`}>
+                            <span className="hover:underline cursor-pointer">{offer.title}</span>
+                          </Link>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(offer.status)}</TableCell>
+                        <TableCell className="text-center">{offer.activeCreatorCount || 0}</TableCell>
+                        <TableCell className="text-center">{offer.applicationCount || 0}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{offer.viewCount || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <Link href={`/company/offers/${offer.id}/edit`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              data-testid={`button-edit-${offer.id}`}
+                            >
+                              Edit
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center py-12">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground mb-4">You haven't created any offers yet.</p>
                 <Link href="/company/create-offer">
                   <Button>

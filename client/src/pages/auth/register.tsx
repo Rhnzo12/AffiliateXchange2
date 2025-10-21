@@ -34,17 +34,44 @@ export default function Register() {
       return;
     }
 
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // TODO: Implement actual registration logic
-    setTimeout(() => {
+    try {
+      // TODO: Implement actual registration logic with API call
+      // const response = await fetch('/api/register', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email, password, displayName, userType })
+      // });
+
+      setTimeout(() => {
+        setIsLoading(false);
+        toast({
+          title: "Account created!",
+          description: "Welcome to AffiliateXchange. Redirecting...",
+        });
+        
+        // Redirect based on user type
+        const dashboardPath = userType === "creator" ? "/creator/dashboard" : "/company/dashboard";
+        setLocation(dashboardPath);
+      }, 1000);
+    } catch (error) {
       setIsLoading(false);
       toast({
-        title: "Account created!",
-        description: "Welcome to AffiliateXchange. Redirecting...",
+        title: "Registration failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
       });
-      setLocation("/dashboard");
-    }, 1000);
+    }
   };
 
   return (
@@ -120,9 +147,11 @@ export default function Register() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="At least 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={8}
                   data-testid="input-password"
                 />
               </div>
@@ -132,9 +161,11 @@ export default function Register() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  minLength={8}
                   data-testid="input-confirm-password"
                 />
               </div>
